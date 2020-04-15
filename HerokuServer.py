@@ -47,6 +47,7 @@ def on_message(client_socket,addr):
             break
         except Exception as e:
             print("err")
+            print(e)
             client_socket.close()
             continue
     # client_socket.close()

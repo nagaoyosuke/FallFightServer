@@ -16,8 +16,6 @@ bind_ip = "0.0.0.0" #お使いのサーバーのホスト名を入れます
 bind_port = int(os.getenv("PORT", 5000)) #クライアントで設定したPORTと同じもの指定してあげます
 
 Lobby = LobbyBase(16)
-
-
 # thread processing a task from clients
 def on_message(client_socket,addr):
     while True:

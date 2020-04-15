@@ -1,1 +1,1 @@
-web: gunicorn app:HerokuServer --log-file=-
+web: python3 HerokuServer.py

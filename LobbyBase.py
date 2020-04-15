@@ -12,8 +12,8 @@ class LobbyBase:
     def __init__(self, maxUser):
         self.maxUser = maxUser
         self.maxRooms = int(maxUser / 4) + 1
-        self.__IDTable = deque(range(maxUser))
-        self.__RoomIDTable = deque(range(self.maxRooms))
+        self.__IDTable = deque(range(1,maxUser))
+        self.__RoomIDTable = deque(range(1,self.maxRooms))
         self.Member = []
         self.Rooms = []
         
@@ -28,35 +28,35 @@ class LobbyBase:
             if my == None:
                 #sendData = dict([('state', 'Error'), ('message', str(ErrMessage))])
                 #sendData = dict([('state', 'Error'), ('message', 'You donot join Member in Lobby')])
-                #server.send_message(client,json.dumps(sendData))
+                #server.send_message(socket,json.dumps(sendData))
                 return False
         return True
 
-    def Login(self, client, server, data):
+    def Login(self, socket,ip,port, data):
         print(data['name'])
 
         #DBの設定がないからIDの送信は今の所必要ない(01/22)
-        # m = MemberBase(client,server,data['ID'],data['name'])
-        m = MemberBase(client,server,self.__IDTable.popleft(),data['name'])
+        # m = MemberBase(socket,data['ID'],data['name'])
+        m = MemberBase(socket,ip,port,self.__IDTable.popleft(),data['name'])
 
-        if self.LoginMember in m:
-            sendData = dict([('state', 'Error'), ('message', 'You are already login Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-            return
+        # if len(self.Member) > 0:
+        #     if self.Member in m:
+        #         self.ErrorSend(socket,'100','You are already login Lobby')
+        #         return
 
         self.Member.append(m)
         
         #IDを適当にとってるから修正必要、あと被ることがあるからそれも(01/22)
         #順番になった
         sendData = dict([('state', 'Login'), ('ID', str(m.ID))])
-        server.send_message(client,json.dumps(sendData,ensure_ascii=False))
+        socket.send(self.ChangeJsonSend(sendData))
 
-    def Logout(self,client,server):
+    def Logout(self,socket):
 
         print("Logout")
         #対戦相手の情報が残ってるから削除
-        # user = self.GetFindMemberFromOppClient(client)
-        logoutUser = self.GetFindMemberFromClient(client)
+        # user = self.GetFindMemberFromOppClient(socket)
+        logoutUser = self.GetFindMemberFromClient(socket)
         self.__IDTable.append(logoutUser)
 
         if logoutUser != None:
@@ -68,9 +68,9 @@ class LobbyBase:
         user.opp = None
         
         sendData = dict([('state', 'Info'), ('message', 'Your Opp Logout')])
-        server.send_message(user.client,json.dumps(sendData,ensure_ascii=False))  
+        socket.send(self.ChangeJsonSend(sendData))
 
-    def LobbyMemberList(self, client, server, data):
+    def LobbyMemberList(self, socket, data):
         base = dict([('ID',-1), ('name','Hoge')])
         sendData = {"state": "MemberList","Member": []}
 
@@ -88,134 +88,33 @@ class LobbyBase:
             sendData['Member'].append(b)
         
         print(sendData)
-        server.send_message(client,json.dumps(sendData,ensure_ascii=False))
+        socket.send(self.ChangeJsonSend(sendData))
 
-    def CreateRoomRequest(self, client, server, data):
-        if self.MemberCheck(self.GetFindMemberFromClient,client) == False:
-            self.ErrorSend(client,server,'101','You donot join Member in Lobby')
+    def CreateRoomRequest(self, socket, data):
+        if self.MemberCheck(self.GetFindMemberFromClient,socket) == False:
+            self.ErrorSend(socket,'101','You donot join Member in Lobby')
             return
 
         m = self.GetFindMemberFromUserID(data['ID'])
 
         if m.isJoin == True:
-            self.ErrorSend(client,server,'103','You have already created or entered a room')
+            self.ErrorSend(socket,'103','You have already created or entered a room')
             return
 
         r = RoomBase(self.__RoomIDTable,data['roomName'],4,m)
         self.Rooms.append(r)
 
-
-
-    def MatchingRequest(self, client, server, data):
-
-        if self.MemberCheck(self.GetFindMemberFromClient,client) == False:
-            sendData = dict([('state', 'Error'), ('message', 'You donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-            return
-
-        if self.MemberCheck(self.GetFindMemberFromUserID,data['oppID']) == False:
-            sendData = dict([('state', 'Error'), ('message', 'Opponent donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-            return
-
-        my = self.GetFindMemberFromClient(client)
-        opp = self.GetFindMemberFromUserID(data['oppID'])
-        my.opp = opp
-        opp.opp = my
-
-        my.isBattle = True
-        opp.isBattle = True
-        my.time = -10.0
-        opp.time = -10.0
-
-        sendData = dict([('state', 'Matching'), ('oppID', opp.ID),('oppName', opp.name)])
-        server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-        sendData['oppID'] = my.ID
-        sendData['oppName'] = my.name
-        server.send_message(opp.client,json.dumps(sendData,ensure_ascii=False))
-
-        #マッチング確認がないからすぐにバトルのセッティング
-        self.BattleInit(server, my, opp, data)
-
-    def BattleInit(self, server, my, opp, data):
-        sendData = dict([('state', 'Init'), ('name', str(opp.name)), ('nickName',str(opp.nickName)), ('streetAddress',str(opp.streetAddress)), ('startTime', str(random.uniform(4,10)))])
-        server.send_message(my.client,json.dumps(sendData,ensure_ascii=False))
-        sendData['name'] = my.name
-        sendData['nickName'] = my.nickName
-        sendData['streetAddress'] = my.streetAddress
-        server.send_message(opp.client,json.dumps(sendData,ensure_ascii=False))
-
-    def Battle(self, client, server, data):
-        if self.MemberCheck(self.GetFindMemberFromClient,client) == False:
-            sendData = dict([('state', 'Error'), ('message', 'You donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-            return
-        my = self.GetFindMemberFromClient(client)
-
-        if self.MemberCheck(self.GetFindMemberFromClient,my.opp.client) == False:
-            sendData = dict([('state', 'Error'), ('message', 'You donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-            return
-        opp = my.opp
-
-        time = float(data['attackTime'])
-        my.time = time
-        opp.opp.time = time
-
-        sendData = dict([('state', 'Info'), ('message', 'AttackSpeed OK')])
-        server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-        sendData = dict([('state', 'Info'), ('message', 'OppAttackSpeed OK')])
-        server.send_message(my.opp.client,json.dumps(sendData,ensure_ascii=False))
-
-        #両方とものタイムが揃ったら
-        if (my.time > -1.0) and (my.opp.time > -1.0):
-            my.isBattle = False
-            opp.isBattle = False
-            sendData2 = dict([('state', 'Battle'), ('isJudge', 'Win'), ('myTime',str(my.time)), ('oppTime',str(my.opp.time))])
-            if (my.time < my.opp.time):
-                sendData2['isJudge'] = 'Win'
-                server.send_message(client,json.dumps(sendData2,ensure_ascii=False))
-                sendData2['isJudge'] = 'Lose'
-                server.send_message(my.opp.client,json.dumps(sendData2,ensure_ascii=False))
-            elif (my.time > my.opp.time):
-                sendData2['isJudge'] = 'Lose'
-                server.send_message(client,json.dumps(sendData2,ensure_ascii=False))
-                sendData2['isJudge'] = 'Win'
-                server.send_message(my.opp.client,json.dumps(sendData2,ensure_ascii=False))
-            elif (my.time == my.opp.time):
-                sendData2['isJudge'] = 'Draw'
-                server.send_message(client,json.dumps(sendData2))              
-                server.send_message(my.opp.client,json.dumps(sendData2,ensure_ascii=False))
-
-    
-
-    def MyBattleReSet(self,client,server):
-        print('MyBattleReSet')
-
-        if self.MemberCheck(self.GetFindMemberFromClient,client) == False:
-            sendData = dict([('state', 'Error'), ('message', 'You donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-            return
-
-        my = self.GetFindMemberFromClient(client)
-        my.opp = None
-        my.isBattle = False
-        my.time = -10.0
-
-        sendData = dict([('state', 'Info'), ('message', 'Your battle data reset OK')])
-        server.send_message(user.client,json.dumps(sendData,ensure_ascii=False))  
-
-    def GetFindMemberFromClient(self,client):
+    def GetFindMemberFromSocket(self,socket):
         for value in self.Member:
-            if value.client == client:
+            if value.socket == socket:
                 return value
         return None
 
-    def GetFindMemberFromOppClient(self,client):
+    def GetFindMemberFromOppClient(self,socket):
         for value in self.Member:
             if value.opp == None:
                 continue
-            if value.opp.client == client:
+            if value.opp.socket == socket:
                 return value
         return None
 
@@ -225,32 +124,34 @@ class LobbyBase:
                 return value
         return None
 
-    def ErrorSend(self,client,server,code,message,isAll=False):
+    def ChangeJsonSend(self,json_SendData):
+        return json.dumps(json_SendData,ensure_ascii=False).encode('utf_8')
+
+    def ErrorSend(self,socket,code,message,isAll=False):
         sendData = dict([('state', 'Error'), ('code', str(code)), ('message', message)])
         if isAll == True:
-            server.send_message_to_all(json.dumps(sendData,ensure_ascii=False))
+            for m in self.Member:
+                socket.send(self.ChangeJsonSend(sendData))
         else:    
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
-    
+            socket.send(self.ChangeJsonSend(sendData))
 
-    def OpenChat(self, client, server, data):
-        server.send_message_to_all(json.dumps(data,ensure_ascii=False))
+    def OpenChat(self, socket, data):
+        for m in self.Member:
+            m.socket.send(str(data).encode('utf_8'))            
 
-    def DirectChat(self, client, server, data):
+    def DirectChat(self, socket, data):
 
-        if self.MemberCheck(self.GetFindMemberFromClient,client) == False:
-            sendData = dict([('state', 'Error'), ('message', 'You donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
+        if self.MemberCheck(self.GetFindMemberFromClient,socket) == False:
+            self.ErrorSend(socket,'101','You donot join Member in Lobby')
             return
 
         if self.MemberCheck(self.GetFindMemberFromUserID,data['oppID']) == False:
-            sendData = dict([('state', 'Error'), ('message', 'Opponent donot join Member in Lobby')])
-            server.send_message(client,json.dumps(sendData,ensure_ascii=False))
+            self.ErrorSend(socket,'102','Opponent donot join Member in Lobby')
             return
 
-        my = self.GetFindMemberFromClient(client)
+        my = self.GetFindMemberFromClient(socket)
         opp = self.GetFindMemberFromUserID(data['oppID'])
 
         sendData = dict([('state', 'DirectChat'),('oppID', my.ID),('oppName', my.name),('text', data['text'])])
 
-        server.send_message(opp.client,json.dumps(sendData,ensure_ascii=False))
+        server.send_message(opp.socket,json.dumps(sendData,ensure_ascii=False))

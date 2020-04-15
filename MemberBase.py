@@ -3,8 +3,9 @@ class MemberBase:
     RoomBase = None
     isJoin = False
 
-    def __init__(self,client,server,ID,name,nickName,streetAddress):
-        self.client = client
-        self.server = server
+    def __init__(self,socket,ip,port,ID,name):
+        self.socket = socket
+        self.ip = ip
+        self.port = port
         self.ID = ID
         self.name = name

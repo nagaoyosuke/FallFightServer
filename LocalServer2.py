@@ -53,7 +53,7 @@ def on_message(client_socket,addr):
         except Exception as e:
             print("err")
             client_socket.close()
-            continue
+            break
     # client_socket.close()
 
 @route('/')

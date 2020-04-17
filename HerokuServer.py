@@ -18,6 +18,7 @@ def on_message(client_socket,addr):
             request = client_socket.recv(1024)
             # print data (max buffer size 1024) sent from client
             print ("Received: %s" % request)
+            client_socket.send(b'OK')
             client_socket.close()
 
             # send a message "Ack" to client
@@ -46,7 +47,7 @@ def on_message(client_socket,addr):
             print("err")
             print(e)
             client_socket.close()
-            continue
+            break
     # client_socket.close()
 
 @route('/')

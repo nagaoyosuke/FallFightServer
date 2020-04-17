@@ -12,7 +12,7 @@ from LobbyBase import LobbyBase
 
 # from LobbyBase import LobbyBase
 
-bind_ip = "0.0.0.0" #お使いのサーバーのホスト名を入れます
+bind_ip = "https://fallfightserver.herokuapp.com" #お使いのサーバーのホスト名を入れます
 bind_port = int(os.getenv("PORT", 5000)) #クライアントで設定したPORTと同じもの指定してあげます
 
 Lobby = LobbyBase(16)

@@ -14,6 +14,7 @@ from bottle import route, run
 
 def CreateServer():
     bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
+    bind_ip = "https://fallfightserver.herokuapp.com/" #お使いのサーバーのホスト名を入れます
     bind_port = int(os.getenv("PORT", 5000)) 
 
     with socket.create_server((bind_ip,bind_port), family=socket.AF_INET, dualstack_ipv6=False) as server:

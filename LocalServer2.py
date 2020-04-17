@@ -21,7 +21,7 @@ bind_port = 12345 #クライアントで設定したPORTと同じもの指定し
 Lobby = LobbyBase(16)
 
 def CreateServer():
-    with socket.create_server((bind_ip,bind_port), family=socket.AF_INET6, dualstack_ipv6=True) as server:
+    with socket.create_server((bind_ip,bind_port), family=socket.AF_INET, dualstack_ipv6=False) as server:
         # create socket object
         # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         # server = socket.create_server((bind_ip,bind_port), family=socket.AF_INET6, dualstack_ipv6=True)

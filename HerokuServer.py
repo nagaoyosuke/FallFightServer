@@ -10,9 +10,6 @@ import threading
 from bottle import route, run
 # from LobbyBase import LobbyBase
 
-bind_ip = "https://fallfightserver.herokuapp.com" 
-bind_port = int(os.getenv("PORT", 5000)) 
-
 # Lobby = LobbyBase(16)
 # thread processing a task from clients
 def on_message(client_socket,addr):
@@ -21,7 +18,6 @@ def on_message(client_socket,addr):
             request = client_socket.recv(1024)
             # print data (max buffer size 1024) sent from client
             print ("Received: %s" % request)
-            print ("Addr:" + addr[0] + " Port:" + addr[1])
 
             # send a message "Ack" to client
             # client_socket.send(request)
@@ -59,6 +55,9 @@ def hello():
 
 # Main
 if __name__ == "__main__":
+    bind_ip = socket.gethostname()
+    bind_port = int(os.getenv("PORT", 5000)) 
+
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     server.bind((socket.gethostname(), bind_port))
     server.listen(5)  

@@ -21,7 +21,7 @@ def on_message(client_socket,addr):
             request = client_socket.recv(1024)
             # print data (max buffer size 1024) sent from client
             print ("Received: %s" % request)
-            print ("Addr: %s" % addr)
+            print ("Addr:" + addr[0] + " Port:" + addr[1])
 
             # send a message "Ack" to client
             # client_socket.send(request)

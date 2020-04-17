@@ -22,7 +22,7 @@ def on_message(client_socket,addr):
             # print data (max buffer size 1024) sent from client
             print ("Received: %s" % request)
             # send a message "Ack" to client
-            client_socket.send(request.encode('utf_8'))
+            client_socket.send(request)
 
             # data = json.loads(request)
 

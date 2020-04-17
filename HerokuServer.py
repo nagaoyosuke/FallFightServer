@@ -11,23 +11,48 @@ from bottle import route, run
 # from LobbyBase import LobbyBase
 
 # Lobby = LobbyBase(16)
-# thread processing a task from clients
+
+bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
+bind_port = int(os.getenv("PORT", 5000)) 
+
+def CreateServer():
+    with socket.create_server((bind_ip,bind_port), family=socket.AF_INET6, dualstack_ipv6=True) as server:
+        # create socket object
+        # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        # server = socket.create_server((bind_ip,bind_port), family=socket.AF_INET6, dualstack_ipv6=True)
+        # bind ip + port as a server 
+        # server.bind((bind_ip, bind_port))
+        # listen with maximum 5 waiting queues
+        server.listen(5)  ### server while loop
+        print ("Listening on %s: %d" % (bind_ip, bind_port))
+        while True:
+            # event: a conncetion from client
+            client, addr = server.accept()
+            print ("Accepted connection from %s: %d" % (addr[0], addr[1]))
+            #接続してきたやつの受信待機用に個別にスレッドを作成
+            message = threading.Thread(target=on_message, args=(client,addr,))
+            message.start()
+
+
 def on_message(client_socket,addr):
     while True:
         try:
             request = client_socket.recv(1024)
+             # 切断された
+            if len(request) == 0:
+                break
             # print data (max buffer size 1024) sent from client
             print ("Received: %s" % request)
-            client_socket.send(b'OK')
-            client_socket.close()
-
+            print(client_socket.proto)
             # send a message "Ack" to client
-            # client_socket.send(request)
+            # client_socket.send("Ack!, connecting..".encode('utf_8'))
 
-            # data = json.loads(request)
+            data = json.loads(request)
 
-            # print(data['state'])
-            # print(data)
+            print(data['state'])
+            print(data)
+
+            client_socket.send("OK".encode('utf_8'))
 
             # if data['state'] == 'Init':
             #     sendData = InitMessage(data)
@@ -41,13 +66,16 @@ def on_message(client_socket,addr):
             #     Lobby.DirectChat(client_socket,data)    
         except socket.error:
             print("Lost")
-            client_socket.close()
             break
+        except ConnectionResetError:
+            print("close conenection")
+            break
+        except json.decoder.JSONDecodeError:
+            print("not json")
+            continue
         except Exception as e:
-            print("err")
             print(e)
-            client_socket.close()
-            break
+            continue
     # client_socket.close()
 
 @route('/')
@@ -57,17 +85,4 @@ def hello():
 
 # Main
 if __name__ == "__main__":
-    bind_ip = socket.gethostname()
-    bind_port = int(os.getenv("PORT", 5000)) 
-
-    server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    server.bind((socket.gethostname(), bind_port))
-    server.listen(5)  
-    print ("Listening on %s: %d" % (bind_ip, bind_port))
-    while True:
-        # event: a conncetion from client
-        client, addr = server.accept()
-        print ("Accepted connection from %s: %d" % (addr[0], addr[1]))
-        #接続してきたやつの受信待機用に個別にスレッドを作成
-        message = threading.Thread(target=on_message, args=(client,addr,))
-        message.start()
+   CreateServer()

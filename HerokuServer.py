@@ -12,10 +12,10 @@ from bottle import route, run
 
 # Lobby = LobbyBase(16)
 
-bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
-bind_port = int(os.getenv("PORT", 5000)) 
-
 def CreateServer():
+    bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
+    bind_port = int(os.getenv("PORT", 5000)) 
+    
     with socket.create_server((bind_ip,bind_port), family=socket.AF_INET6, dualstack_ipv6=True) as server:
         # create socket object
         # server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

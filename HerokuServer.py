@@ -62,7 +62,7 @@ if __name__ == "__main__":
     # create socket object
     server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
     # bind ip + port as a server 
-    server.bind((bind_ip, bind_port))
+    server.bind((socket.gethostname(), bind_port))
     # listen with maximum 5 waiting queues
     server.listen(5)  ### server while loop
     print ("Listening on %s: %d" % (bind_ip, bind_port))

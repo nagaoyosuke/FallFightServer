@@ -1,5 +1,5 @@
 import logging
-import psycopg2
+# import psycopg2
 import os
 import json
 import random
@@ -56,19 +56,19 @@ class LobbyBase:
         print("Logout")
         #対戦相手の情報が残ってるから削除
         # user = self.GetFindMemberFromOppClient(socket)
-        logoutUser = self.GetFindMemberFromClient(socket)
+        logoutUser = self.GetFindMemberFromSocket(socket)
         self.__IDTable.append(logoutUser)
 
         if logoutUser != None:
             self.Member.remove(logoutUser)
 
-        if user == None:
-            return
+        # if user == None:
+        #     return
 
-        user.opp = None
+        # user.opp = None
         
-        sendData = dict([('state', 'Info'), ('message', 'Your Opp Logout')])
-        socket.send(self.ChangeJsonSend(sendData))
+        # sendData = dict([('state', 'Info'), ('message', 'Your Opp Logout')])
+        # socket.send(self.ChangeJsonSend(sendData))
 
     def LobbyMemberList(self, socket, data):
         base = dict([('ID',-1), ('name','Hoge')])
@@ -79,7 +79,7 @@ class LobbyBase:
         # sendData.append('MemberList')
 
         for m in self.Member:
-            if m.isBattle == True:
+            if m.isJoin == True:
                 continue
 
             b = base.copy()
@@ -91,7 +91,7 @@ class LobbyBase:
         socket.send(self.ChangeJsonSend(sendData))
 
     def CreateRoomRequest(self, socket, data):
-        if self.MemberCheck(self.GetFindMemberFromClient,socket) == False:
+        if self.MemberCheck(self.GetFindMemberFromSocket,socket) == False:
             self.ErrorSend(socket,'101','You donot join Member in Lobby')
             return
 
@@ -141,7 +141,7 @@ class LobbyBase:
 
     def DirectChat(self, socket, data):
 
-        if self.MemberCheck(self.GetFindMemberFromClient,socket) == False:
+        if self.MemberCheck(self.GetFindMemberFromSocket,socket) == False:
             self.ErrorSend(socket,'101','You donot join Member in Lobby')
             return
 
@@ -149,7 +149,7 @@ class LobbyBase:
             self.ErrorSend(socket,'102','Opponent donot join Member in Lobby')
             return
 
-        my = self.GetFindMemberFromClient(socket)
+        my = self.GetFindMemberFromSocket(socket)
         opp = self.GetFindMemberFromUserID(data['oppID'])
 
         sendData = dict([('state', 'DirectChat'),('oppID', my.ID),('oppName', my.name),('text', data['text'])])

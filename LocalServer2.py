@@ -15,8 +15,11 @@ from LobbyBase import LobbyBase
 
 # from LobbyBase import LobbyBase
 
-bind_ip = "127.0.0.1" #お使いのサーバーのホスト名を入れます
-bind_port = 12345 #クライアントで設定したPORTと同じもの指定してあげます
+# bind_ip = "127.0.0.1" #お使いのサーバーのホスト名を入れます
+# bind_port = 12345 #クライアントで設定したPORTと同じもの指定してあげます
+
+bind_ip = "0.0.0.0" #お使いのサーバーのホスト名を入れます
+bind_port = int(os.getenv("PORT", 5000)) 
 
 Lobby = LobbyBase(16)
 

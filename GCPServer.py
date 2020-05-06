@@ -1,6 +1,7 @@
 import logging
 # import psycopg2
 import os
+import sys
 import json
 import random
 
@@ -13,6 +14,7 @@ from bottle import route, run
 from LobbyBase import LobbyBase
 
 Lobby = LobbyBase(16)
+
 
 def CreateServer():
     # bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
@@ -32,14 +34,19 @@ def CreateServer():
         print ("Listening on %s: %d" % (bind_ip, bind_port))
         while True:
             # event: a conncetion from client
-            client, addr = server.accept()
+            try:
+                client, addr = server.accept()
+            except Exception as e:
+                print(e)
+                break
+
             print ("Accepted connection from %s: %d" % (addr[0], addr[1]))
             #接続してきたやつの受信待機用に個別にスレッドを作成
-            message = threading.Thread(target=on_message, args=(client,addr,))
+            message = threading.Thread(target=on_message, args=(server,client,addr,))
             message.start()
 
 
-def on_message(client_socket,addr):
+def on_message(server,client_socket,addr):
     while True:
         try:
             request = client_socket.recv(1024)
@@ -70,7 +77,11 @@ def on_message(client_socket,addr):
             elif data['state'] == 'OpenChat':
                 Lobby.OpenChat(client_socket,data)
             elif data['state'] == 'DirectChat':
-                Lobby.DirectChat(client_socket,data)    
+                Lobby.DirectChat(client_socket,data) 
+            elif data['state'] == 'ServerClose':
+                server.close()
+                break
+                
         except socket.error:
             print("Lost")
             break

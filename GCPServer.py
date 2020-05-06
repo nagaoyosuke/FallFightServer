@@ -8,14 +8,19 @@ import socket
 import threading
 
 from bottle import route, run
+from flask import Flask
+
+app = Flask(__name__)
+
 # from LobbyBase import LobbyBase
 
 # Lobby = LobbyBase(16)
 
 def CreateServer():
-    # bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
-    bind_ip = "0.0.0.0" #お使いのサーバーのホスト名を入れます
+    bind_ip = socket.gethostname() #お使いのサーバーのホスト名を入れます
+    # bind_ip = "fallfightserver-dot-fallfightserver.ue.r.appspot.com" #お使いのサーバーのホスト名を入れます
     bind_port = int(os.getenv("PORT", 5000)) 
+    # bind_port = 8081 
 
     with socket.create_server((bind_ip,bind_port), family=socket.AF_INET, dualstack_ipv6=False) as server:
         # create socket object
@@ -79,11 +84,19 @@ def on_message(client_socket,addr):
             continue
     # client_socket.close()
 
-@route('/')
-def hello():
-    print("hello")
-    return ""
+# @route('/')
+# def hello():
+#     print("hello")
+#     return ""
+
+@app.route('/')
+def index():
+    return "hellow world!!"
 
 # Main
 if __name__ == "__main__":
-   CreateServer()
+    # t = threading.Thread(target=CreateServer)
+    # t.daemon = True
+    # t.start()
+    # app.run(debug=True)
+    CreateServer()
